@@ -1,7 +1,7 @@
 // src/api.js
 
 // fragments microservice API to use, defaults to localhost:8080 if not set in env
-const apiUrl = process.env.API_URL || 'http://localhost:8080';
+const apiUrl = process.env.API_URL || `http://${window.location.host}`;
 
 /**
  * Given an authenticated user, request all fragments for this user from the
@@ -25,5 +25,45 @@ export async function getUserFragments(user) {
     return data;
   } catch (err) {
     console.error('Unable to call GET /v1/fragment', { err });
+  }
+}
+
+export async function createFragment(user, fragmentText) {
+  try {
+    const res = await fetch(`${apiUrl}/v1/fragments`, {
+      method: 'POST',
+      headers: {
+        ...user.authorizationHeaders(),
+        'Content-Type': 'text/plain',
+      },
+      body: fragmentText,
+    });
+
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    console.log('Fragment created successfully', data);
+    return data;
+  } catch (err) {
+    console.error('Error creating fragment', { err });
+  }
+}
+
+export async function getFragmentById(user, fragmentId) {
+  console.log(`Requesting fragment data for ID: ${fragmentId}`);
+  try {
+    const res = await fetch(`${apiUrl}/v1/fragments/${fragmentId}`, {
+      headers: user.authorizationHeaders(),
+    });
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    const data = await res.text();
+    console.log('Successfully got fragment data', { data });
+    return data;
+  } catch (err) {
+    console.error(`Unable to call GET /v1/fragments/${fragmentId}`, { err });
   }
 }
