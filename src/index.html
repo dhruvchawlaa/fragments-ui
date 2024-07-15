@@ -4,6 +4,58 @@
     <meta charset="utf-8" />
     <title>Fragments UI</title>
     <link rel="stylesheet" href="https://unpkg.com/bamboo.css/dist/light.min.css" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      #fragment-form {
+        margin-bottom: 20px;
+      }
+      #fragment-text {
+        display: block;
+        margin-bottom: 10px;
+      }
+      #fragment-type {
+        display: block;
+        margin-bottom: 20px;
+      }
+      #drop-area {
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        color: #ccc;
+        margin-bottom: 20px;
+      }
+      #drop-area.dragging {
+        border-color: #000;
+        color: #000;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        background: #f4f4f4;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .fragment-content {
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .fragment-metadata {
+        margin-top: 10px;
+        padding-left: 10px;
+        border-left: 3px solid #ddd;
+      }
+      .convert-btn {
+        margin-top: 10px;
+        display: block;
+      }
+    </style>
     <script type="module" src="app.js"></script>
   </head>
   <body>
@@ -16,8 +68,18 @@
       <form id="fragment-form">
         <label for="fragment-text">Create a fragment:</label>
         <input type="text" id="fragment-text" placeholder="Type your fragment here" />
+        <select id="fragment-type">
+          <option value="text/plain">Text</option>
+          <option value="text/plain; charset=utf-8">Text (UTF-8)</option>
+          <option value="text/markdown">Markdown</option>
+          <option value="text/html">HTML</option>
+          <option value="text/csv">CSV</option>
+          <option value="application/json">JSON</option>
+          <option value="application/yaml">YAML</option>
+        </select>
         <button id="submit-fragment" style="margin-top: 10px">Submit</button>
       </form>
+      <div id="drop-area">Drag and drop a file here to upload a fragment</div>
       <ul id="fragment-list"></ul>
     </section>
   </body>
