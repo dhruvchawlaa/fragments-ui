@@ -1,5 +1,12 @@
 import { Auth, getUser } from './auth';
-import { getUserFragments, createFragment, getFragmentContent, convertFragment } from './api';
+import {
+  getUserFragments,
+  createFragment,
+  getFragmentContent,
+  convertFragment,
+  updateFragment,
+  deleteFragment,
+} from './api';
 
 async function init() {
   const userSection = document.querySelector('#user');
@@ -8,7 +15,6 @@ async function init() {
   const fragmentForm = document.querySelector('#fragment-form');
   const fragmentText = document.querySelector('#fragment-text');
   const fragmentType = document.querySelector('#fragment-type');
-  const fragmentList = document.querySelector('#fragment-list');
   const dropArea = document.querySelector('#drop-area');
 
   loginBtn.onclick = () => {
@@ -149,8 +155,11 @@ async function displayUserFragments(user) {
           <p><strong>Created:</strong> ${new Date(fragment.created).toLocaleString()}</p>
           <p><strong>Updated:</strong> ${new Date(fragment.updated).toLocaleString()}</p>
           ${fragment.type === 'text/markdown' ? `<button class="convert-btn" data-id="${fragment.id}" data-tohtml="true">Convert to HTML</button>` : ''}
+          <button class="update-btn" data-id="${fragment.id}">Update</button>
+          <button class="delete-btn" data-id="${fragment.id}">Delete</button>
         </div>
       `;
+
       li.querySelector('.fragment-content').onclick = () => {
         const metadata = li.querySelector('.fragment-metadata');
         metadata.style.display = metadata.style.display === 'none' ? 'block' : 'none';
@@ -169,6 +178,29 @@ async function displayUserFragments(user) {
             : escapeHTML(newContent);
         };
       }
+
+      li.querySelector('.update-btn').onclick = async () => {
+        const newContent = prompt('Enter new content for the fragment:', fragmentContent);
+        if (newContent !== null) {
+          try {
+            await updateFragment(user, fragment.id, newContent, fragment.type);
+            displayUserFragments(user);
+          } catch (err) {
+            console.error('Failed to update fragment', { err });
+          }
+        }
+      };
+
+      li.querySelector('.delete-btn').onclick = async () => {
+        if (confirm('Are you sure you want to delete this fragment?')) {
+          try {
+            await deleteFragment(user, fragment.id);
+            displayUserFragments(user);
+          } catch (err) {
+            console.error('Failed to delete fragment', { err });
+          }
+        }
+      };
 
       fragmentList.appendChild(li);
     }

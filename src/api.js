@@ -101,3 +101,44 @@ export async function convertFragment(user, fragmentId, toHtml = true) {
     console.error(`Unable to convert fragment for ID ${fragmentId}`, { err });
   }
 }
+
+export async function updateFragment(user, fragmentId, newContent, contentType) {
+  try {
+    const res = await fetch(`${apiUrl}/v1/fragments/${fragmentId}`, {
+      method: 'PUT',
+      headers: {
+        ...user.authorizationHeaders(),
+        'Content-Type': contentType,
+      },
+      body: newContent,
+    });
+
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    console.log('Fragment updated successfully', data);
+    return data;
+  } catch (err) {
+    console.error('Error updating fragment', { err });
+  }
+}
+
+export async function deleteFragment(user, fragmentId) {
+  try {
+    const res = await fetch(`${apiUrl}/v1/fragments/${fragmentId}`, {
+      method: 'DELETE',
+      headers: user.authorizationHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+
+    console.log('Fragment deleted successfully');
+    return true;
+  } catch (err) {
+    console.error('Error deleting fragment', { err });
+  }
+}
