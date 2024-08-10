@@ -78,7 +78,11 @@ async function init() {
         }
       };
 
-      reader.readAsText(file);
+      if (contentType.startsWith('image/')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
     }
   });
 }
@@ -99,6 +103,17 @@ function getContentType(fileName) {
     case 'yaml':
     case 'yml':
       return 'application/yaml';
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'avif':
+      return 'image/avif';
     default:
       return null;
   }
@@ -115,9 +130,17 @@ async function displayUserFragments(user) {
 
     for (const fragment of userFragments.fragments) {
       const li = document.createElement('li');
-      const content = await getFragmentContent(user, fragment.id);
+      const { url, text, contentType } = await getFragmentContent(user, fragment.id);
+
+      let fragmentContent;
+      if (contentType.startsWith('image/')) {
+        fragmentContent = `<img src="${url}" alt="Image Fragment" />`;
+      } else {
+        fragmentContent = escapeHTML(text);
+      }
+
       li.innerHTML = `
-        <div class="fragment-content">${escapeHTML(content)}</div>
+        <div class="fragment-content">${fragmentContent}</div>
         <div class="fragment-metadata" style="display: none;">
           <p><strong>Id:</strong> ${fragment.id}</p>
           <p><strong>Owner Id:</strong> ${fragment.ownerId}</p>
