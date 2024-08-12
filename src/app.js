@@ -292,7 +292,6 @@ async function displayUserFragments(user) {
 
 function generateConversionButtons(fragment) {
   const conversionMap = {
-    'text/plain': [],
     'text/markdown': ['html', 'txt'],
     'text/html': ['txt'],
     'text/csv': ['json', 'txt'],
@@ -323,6 +322,14 @@ function generateConversionButtons(fragment) {
     )
     .join('');
 
+  const viewOptions =
+    fragment.type !== 'text/plain' && viewButtons
+      ? `<div class="view-options">
+        <strong>View this fragment in the following formats:</strong>
+        ${viewButtons}
+      </div>`
+      : '';
+
   return `
     <div class="conversion-buttons">
       ${
@@ -333,10 +340,7 @@ function generateConversionButtons(fragment) {
       </div>`
           : ''
       }
-      <div class="view-options">
-        <strong>View this fragment in the following formats:</strong>
-        ${viewButtons}
-      </div>
+      ${viewOptions}
     </div>
   `;
 }
