@@ -84,19 +84,27 @@ export async function getFragmentInfo(user, fragmentId) {
   }
 }
 
-export async function convertFragment(user, fragmentId, toHtml = true) {
-  console.log(`Converting fragment to ${toHtml ? 'HTML' : 'Markdown'} for ID: ${fragmentId}`);
+export async function convertFragment(user, fragmentId, extension) {
+  console.log(`Converting fragment to ${extension} for ID: ${fragmentId}`);
   try {
-    const url = `${apiUrl}/v1/fragments/${fragmentId}.${toHtml ? 'html' : 'md'}`;
+    const url = `${apiUrl}/v1/fragments/${fragmentId}.${extension}`;
     const res = await fetch(url, {
       headers: user.authorizationHeaders(),
     });
     if (!res.ok) {
       throw new Error(`${res.status} ${res.statusText}`);
     }
-    const data = await res.text();
-    console.log(`Successfully converted fragment to ${toHtml ? 'HTML' : 'Markdown'}`, { data });
-    return data;
+
+    const contentType = res.headers.get('Content-Type');
+
+    if (contentType.startsWith('image/')) {
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      return { url, contentType };
+    } else {
+      const text = await res.text();
+      return { text, contentType };
+    }
   } catch (err) {
     console.error(`Unable to convert fragment for ID ${fragmentId}`, { err });
   }

@@ -1,0 +1,129 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+#fragment-form {
+  margin-bottom: 20px;
+}
+
+#fragment-text {
+  display: block;
+  margin-bottom: 10px;
+}
+
+#fragment-type {
+  display: block;
+  margin-bottom: 20px;
+}
+
+#drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+#drop-area.dragging {
+  border-color: #000;
+  color: #000;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  background: #f4f4f4;
+  margin: 10px auto;
+  padding: 20px;
+  border-radius: 8px;
+  width: 200%; /* Increased width for the fragment container */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: none; /* Remove max-width to allow full 200% width */
+}
+
+.fragment-content {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.fragment-metadata {
+  margin-top: 10px;
+  padding-left: 15px;
+  border-left: 3px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.conversion-buttons {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.download-options,
+.view-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start; /* Align buttons to the left */
+  width: 100%;
+}
+
+.convert-btn,
+.update-btn,
+.delete-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background-color: #30353b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  flex: 1 1 220px; /* Ensure buttons have a wider minimum width */
+  max-width: 240px; /* Set a maximum width for consistency */
+  text-align: center;
+  margin: 5px; /* Add margin for spacing */
+}
+
+.convert-btn:hover,
+.update-btn:hover,
+.delete-btn:hover {
+  background-color: #30353b;
+}
+
+.view-btn:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
+}
+
+.viewed-image {
+  max-width: 100%;
+  margin-top: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start; /* Align buttons to the left */
+  margin-top: 15px;
+}
+
+.buttons-container .convert-btn,
+.buttons-container .update-btn,
+.buttons-container .delete-btn {
+  flex: 1 1 220px; /* Match the width with other buttons */
+  box-sizing: border-box;
+  max-width: 240px;
+}

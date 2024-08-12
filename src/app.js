@@ -139,10 +139,12 @@ async function displayUserFragments(user) {
       const { url, text, contentType } = await getFragmentContent(user, fragment.id);
 
       let fragmentContent;
-      if (contentType.startsWith('image/')) {
+      if (contentType && contentType.startsWith('image/')) {
         fragmentContent = `<img src="${url}" alt="Image Fragment" />`;
-      } else {
+      } else if (text) {
         fragmentContent = escapeHTML(text);
+      } else {
+        fragmentContent = '<em>Unable to display content</em>';
       }
 
       li.innerHTML = `
@@ -154,7 +156,7 @@ async function displayUserFragments(user) {
           <p><strong>Size:</strong> ${fragment.size} bytes</p>
           <p><strong>Created:</strong> ${new Date(fragment.created).toLocaleString()}</p>
           <p><strong>Updated:</strong> ${new Date(fragment.updated).toLocaleString()}</p>
-          ${fragment.type === 'text/markdown' ? `<button class="convert-btn" data-id="${fragment.id}" data-tohtml="true">Convert to HTML</button>` : ''}
+          ${generateConversionButtons(fragment)}
           <button class="update-btn" data-id="${fragment.id}">Update</button>
           <button class="delete-btn" data-id="${fragment.id}">Delete</button>
         </div>
@@ -165,19 +167,98 @@ async function displayUserFragments(user) {
         metadata.style.display = metadata.style.display === 'none' ? 'block' : 'none';
       };
 
-      if (fragment.type === 'text/markdown') {
-        li.querySelector('.convert-btn').onclick = async (event) => {
+      li.querySelectorAll('.view-btn').forEach((button) => {
+        let originalContentStored = false;
+        let originalContent = '';
+
+        button.onclick = async (event) => {
           const button = event.target;
           const fragmentId = button.getAttribute('data-id');
-          const toHtml = button.getAttribute('data-tohtml') === 'true';
-          const newContent = await convertFragment(user, fragmentId, toHtml);
-          button.innerText = toHtml ? 'Convert to Markdown' : 'Convert to HTML';
-          button.setAttribute('data-tohtml', !toHtml);
-          li.querySelector('.fragment-content').innerHTML = toHtml
-            ? newContent
-            : escapeHTML(newContent);
+          const extension = button.getAttribute('data-extension');
+          const contentArea = li.querySelector('.fragment-content');
+          const allViewButtons = li.querySelectorAll('.view-btn');
+
+          if (!originalContentStored) {
+            originalContent = contentArea.querySelector('img')?.src || contentArea.innerHTML;
+            originalContentStored = true;
+          }
+
+          if (contentType.startsWith('image/')) {
+            if (button.innerText.includes('View')) {
+              allViewButtons.forEach((btn) => {
+                if (btn !== button) btn.disabled = true;
+              });
+
+              const newContent = await convertFragment(user, fragmentId, extension);
+              if (newContent && newContent.url) {
+                const img = document.createElement('img');
+                img.src = newContent.url;
+                img.alt = `Image Fragment in ${extension}`;
+                img.classList.add('viewed-image');
+                contentArea.innerHTML = '';
+                contentArea.appendChild(img);
+                button.innerText = `Convert to .${fragment.type.split('/')[1]}`;
+              } else {
+                console.error('View returned undefined content');
+                allViewButtons.forEach((btn) => (btn.disabled = false));
+              }
+            } else {
+              contentArea.innerHTML = `<img src="${originalContent}" alt="Image Fragment in ${fragment.type.split('/')[1]}" class="viewed-image" />`;
+              button.innerText = `View as .${extension}`;
+              allViewButtons.forEach((btn) => (btn.disabled = false));
+            }
+          } else {
+            if (button.innerText.includes('View')) {
+              allViewButtons.forEach((btn) => {
+                if (btn !== button) btn.disabled = true;
+              });
+
+              const newContent = await convertFragment(user, fragmentId, extension);
+              if (newContent && newContent.text) {
+                contentArea.innerHTML = escapeHTML(newContent.text);
+                button.innerText = `Convert to .${fragment.type.split('/')[1]}`;
+              } else {
+                console.error('Conversion returned undefined content');
+                allViewButtons.forEach((btn) => (btn.disabled = false));
+              }
+            } else {
+              contentArea.innerHTML = originalContent;
+              button.innerText = `View as .${extension}`;
+              allViewButtons.forEach((btn) => (btn.disabled = false));
+            }
+          }
         };
-      }
+      });
+
+      li.querySelectorAll('.download-btn').forEach((button) => {
+        button.onclick = async (event) => {
+          const button = event.target;
+          const fragmentId = button.getAttribute('data-id');
+          const extension = button.getAttribute('data-extension');
+
+          const newContent = await convertFragment(user, fragmentId, extension);
+          if (newContent && newContent.url) {
+            const a = document.createElement('a');
+            a.href = newContent.url;
+            a.download = `${fragmentId}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          } else if (newContent.text) {
+            const blob = new Blob([newContent.text], { type: newContent.contentType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fragmentId}.${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          } else {
+            console.error('Download returned undefined content');
+          }
+        };
+      });
 
       li.querySelector('.update-btn').onclick = async () => {
         const newContent = prompt('Enter new content for the fragment:', fragmentContent);
@@ -207,6 +288,57 @@ async function displayUserFragments(user) {
   } else {
     console.error('Fragments array is not available or is not an array.');
   }
+}
+
+function generateConversionButtons(fragment) {
+  const conversionMap = {
+    'text/plain': [],
+    'text/markdown': ['html', 'txt'],
+    'text/html': ['txt'],
+    'text/csv': ['json', 'txt'],
+    'application/json': ['yaml', 'yml', 'txt'],
+    'application/yaml': ['txt'],
+    'image/png': ['jpg', 'webp', 'gif', 'avif'],
+    'image/jpeg': ['png', 'webp', 'gif', 'avif'],
+    'image/webp': ['png', 'jpg', 'gif', 'avif'],
+    'image/avif': ['png', 'jpg', 'webp', 'gif'],
+    'image/gif': ['png', 'jpg', 'webp', 'avif'],
+  };
+
+  const supportedConversions = conversionMap[fragment.type] || [];
+
+  const downloadButtons = fragment.type.startsWith('image/')
+    ? supportedConversions
+        .map(
+          (ext) =>
+            `<button class="convert-btn download-btn" data-id="${fragment.id}" data-extension="${ext}">Download as .${ext}</button>`
+        )
+        .join('')
+    : '';
+
+  const viewButtons = supportedConversions
+    .map(
+      (ext) =>
+        `<button class="convert-btn view-btn" data-id="${fragment.id}" data-extension="${ext}">View as .${ext}</button>`
+    )
+    .join('');
+
+  return `
+    <div class="conversion-buttons">
+      ${
+        downloadButtons
+          ? `<div class="download-options">
+        <strong>Download the fragment in the following formats:</strong>
+        ${downloadButtons}
+      </div>`
+          : ''
+      }
+      <div class="view-options">
+        <strong>View this fragment in the following formats:</strong>
+        ${viewButtons}
+      </div>
+    </div>
+  `;
 }
 
 function escapeHTML(html) {
